@@ -25,18 +25,45 @@ def handle_invalid_usage(error):
 def sitemap():
     return generate_sitemap(app)
 
-@app.route('/members', methods=['GET'])
-def handle_hello():
+@app.route('/members', methods=['GET', 'POST'])
+def handle_member():
+    # Method GET
+    if request.method == 'GET':
+        members = jackson_family.get_all_members()
+        return members, 200
+    
+    # Method POST
+    if request.method == 'POST':
+        data = request.json
+        members = jackson_family.add_member(data)
+        return {'message' : members}, 200
 
-    # this is how you can use the Family datastructure by calling its methods
-    members = jackson_family.get_all_members()
-    response_body = {
-        "hello": "world",
-        "family": members
-    }
+    # Method NOT FOUND
+    else:
+        return {'message' : 'method not allowed'}, 405
+  
 
+@app.route('/members/<int:member_id>', methods=['GET', 'DELETE'])
+def handle_member_id(member_id):
+    # Method GET
+    if request.method == 'GET':
+        member = jackson_family.get_member(member_id)
+        if member == []:
+            return {'message' : 'member not found'}, 400
+        return member[0], 200
 
-    return jsonify(response_body), 200
+    # Method DELETE
+    if request.method == 'DELETE':
+        member = jackson_family.delete_member(member_id)
+        if member == 0:
+            return {'message' : str(member_id) + ' deleted succesfully'}, 200
+        else:
+            return {'message' : str(member_id) + ' not found!'}, 400
+
+    # Method NOT FOUND
+    else:
+        return {'message' : 'method not allowed'}, 405
+
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
